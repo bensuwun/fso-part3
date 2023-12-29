@@ -1,10 +1,22 @@
 const moment = require('moment');
 const express = require('express');
+const morgan = require('morgan');
 const { generateId } = require('./helpers/generateId.js');
 const app = express();
-app.use(express.json());
 
 let persons = require('./data/persons.json');
+
+morgan.token('body', (request, response) => {
+    const body = request.body;
+
+    if (Object.keys(body).length !== 0 && request.method === "POST")
+        return JSON.stringify(body);
+    return undefined;
+});
+
+app.use(express.json());
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
+  
 
 // Retrieve all persons
 app.get(`/api/persons`, (request, response) => {
