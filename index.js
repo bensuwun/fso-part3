@@ -1,6 +1,7 @@
 const moment = require('moment');
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 const { generateId } = require('./helpers/generateId.js');
 const app = express();
 
@@ -16,7 +17,7 @@ morgan.token('body', (request, response) => {
 
 app.use(express.json());
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
-  
+app.use(cors());  
 
 // Retrieve all persons
 app.get(`/api/persons`, (request, response) => {
@@ -70,6 +71,6 @@ app.get(`/info`, (request, response) => {
     response.send(result);
 });  
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT);
-console.log(`Listening on port ${PORT}`);
+console.log(`Server listening on port ${PORT}`);
