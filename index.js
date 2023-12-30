@@ -54,9 +54,6 @@ app.post('/api/persons', (request, response) => {
     const body = request.body;
     if (!body.name || !body.number)
         return response.status(400).send( { error: 'New entry must contain both name and number.' } );
-    // Check if name exists
-    else if (persons.find(person => person.name.toLowerCase() === body.name.toLowerCase()))
-        return response.status(400).send( { error: 'Name must be unique.' });
 
     Person.create({
         name: body.name,
