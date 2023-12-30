@@ -30,22 +30,45 @@ app.get(`/api/persons`, (request, response) => {
 })
 
 // Retrieve single person
-app.get(`/api/persons/:id`, (request, response) => {
-    const id = parseInt(request.params.id);
-    const person = persons.find(person => person.id === id);
-    if (person)
-        response.json(person);
-    else{
-        response.status(404).send({ error: "Missing Person" });
-    }
+app.get(`/api/persons/:id`, (request, response, next) => {
+    const id = request.params.id;
+    Person.findById(id)
+    .then(result => {
+        if (result) {
+            response.json(result);
+        }
+        else{
+            response.status(404).send({error: "404: No person found"});
+        }
+    })
+    .catch(err => {
+        next(err);
+    })
 })
 
 // Delete phonebook entry
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
     const id = request.params.id;
-    Person.deleteOne({_id: id})
+    Person.findByIdAndDelete(id)
     .then(result => {
         response.status(204).end();
+    })
+    .catch(err => {
+        next(err);
+    })
+});
+
+// Edit a phonebook entry
+app.put('/api/persons/:id', (request, response, next) => {
+    const id = request.params.id;
+    const body = request.body;
+
+    Person.findByIdAndUpdate(id, body, {new: true})
+    .then(updatedPerson => {
+        response.json(updatedPerson);
+    })
+    .catch(err =>{
+        next(err);
     })
 });
 
@@ -59,20 +82,38 @@ app.post('/api/persons', (request, response) => {
         name: body.name,
         number: body.number
     }).then(result => {
-        response.json(result.toJSON());
+        response.json(result);
     })
 });
 
 // Info
 app.get(`/info`, (request, response) => {
-    const nPeople = persons.length;
-    const currentTime = moment().format('LLLL');
-    const result = `
-        <p>Phonebook has info for ${nPeople} people</p>
-        <p>${currentTime}</p>
-    `;
-    response.send(result);
+    Person.find({}).then(result => {
+        const nPeople = result.length;
+        const currentTime = moment().format('LLLL');
+        const data = `
+            <p>Phonebook has info for ${nPeople} people</p>
+            <p>${currentTime}</p>
+        `;
+        response.send(data);
+    })
 });  
+
+// Add middleware to respond to unknown endpoints.
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'Unknown endpoint' });
+}
+app.use(unknownEndpoint);
+
+// Add middleware for exception handling
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message);
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'Malformedatted ID '});
+    }
+    next(error);
+}
+  
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT);
