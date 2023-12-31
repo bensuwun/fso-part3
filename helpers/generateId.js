@@ -1,7 +1,7 @@
-const generateId = (persons) => {
-    return Math.floor(Math.random() * 999999999)
-}
+const generateId = () => {
+    return Math.floor(Math.random() * 999999999);
+};
 
 module.exports = {
     generateId
-}
+};
