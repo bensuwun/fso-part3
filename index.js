@@ -63,7 +63,7 @@ app.put('/api/persons/:id', (request, response, next) => {
     const id = request.params.id;
     const body = request.body;
 
-    Person.findByIdAndUpdate(id, body, {new: true})
+    Person.findByIdAndUpdate(id, body, {new: true,  runValidators: true, context: "query"})
     .then(updatedPerson => {
         response.json(updatedPerson);
     })
@@ -73,16 +73,17 @@ app.put('/api/persons/:id', (request, response, next) => {
 });
 
 // Add new phonebook entry
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body;
-    if (!body.name || !body.number)
-        return response.status(400).send( { error: 'New entry must contain both name and number.' } );
 
     Person.create({
         name: body.name,
         number: body.number
     }).then(result => {
         response.json(result);
+    })
+    .catch(err => {
+        next(err);
     })
 });
 
@@ -109,10 +110,14 @@ app.use(unknownEndpoint);
 const errorHandler = (error, request, response, next) => {
     console.error(error.message);
     if (error.name === 'CastError') {
-        return response.status(400).send({ error: 'Malformedatted ID '});
+        return response.status(400).send({ error: 'Malformatted ID '});
+    }
+    else if (error.name === 'ValidationError') {
+        return response.status(400).send({ error: error.message });
     }
     next(error);
 }
+app.use(errorHandler);
   
 
 const PORT = process.env.PORT || 3001;
